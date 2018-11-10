@@ -64,7 +64,6 @@ class SQLObject
   end
 
   def initialize(params = {})
-    # debugger
     params.each do |attr_name, val|
       attr_name = attr_name.to_sym
       raise "unknown attribute '#{attr_name}'" unless self.class.columns.include?(attr_name)
@@ -95,10 +94,19 @@ class SQLObject
   end
 
   def update
-    # ...
+    set_cols = self.class.columns.map { |col| "#{col} = ?" }.join(", ")
+
+    DBConnection.execute(<<-SQL, *attribute_values, self.id)
+      UPDATE
+        #{self.class.table_name}
+      SET
+        #{set_cols}
+      WHERE
+        id = ?
+    SQL
   end
 
   def save
-    # ...
+    self.id.nil? ? self.insert : self.update
   end
 end
